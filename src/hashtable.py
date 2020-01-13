@@ -1,3 +1,5 @@
+from linkedlist import DoublyLinkedList
+
 # '''
 # Linked List hash table key/value pair
 # '''
@@ -51,7 +53,28 @@ class HashTable:
 
         Fill this in.
         '''
-        pass
+        pos = self._hash_mod(key)
+
+        if self.storage[pos] is None:
+            linked = DoublyLinkedList()
+
+            self.storage[pos] = linked
+            linked.add_to_tail( (key, value) )
+        else:
+            currentNode = self.storage[pos].head
+            found = False
+
+            while currentNode is not None:
+                if currentNode.value[0] == key:
+                    currentNode.value = (key, value)
+                    found = True
+                    break
+
+                currentNode = currentNode.next
+
+            if found is False:
+                self.storage[pos].add_to_tail( (key, value) )
+        
 
 
 
@@ -63,7 +86,19 @@ class HashTable:
 
         Fill this in.
         '''
-        pass
+        pos = self._hash_mod(key)
+
+        if self.storage[pos] is not None:
+            currentNode = self.storage[pos].head
+
+            while currentNode is not None:
+                if currentNode.value[0] == key:
+                    self.storage[pos].delete(currentNode)
+                    return
+                
+                currentNode = currentNode.next
+
+        print("Key not found")
 
 
     def retrieve(self, key):
@@ -74,8 +109,18 @@ class HashTable:
 
         Fill this in.
         '''
-        pass
+        pos = self._hash_mod(key)
 
+        if self.storage[pos] is not None:
+            currentNode = self.storage[pos].head
+
+            while currentNode is not None:
+                if currentNode.value[0] == key:
+                    return currentNode.value[1]
+                
+                currentNode = currentNode.next
+
+        return None
 
     def resize(self):
         '''
@@ -84,9 +129,24 @@ class HashTable:
 
         Fill this in.
         '''
-        pass
+        newTable = HashTable(self.capacity * 2)
 
+        for i in self.storage:
+            if i is not None:
+                currentNode = i.head
 
+                while currentNode is not None:
+                    key = currentNode.value[0]
+                    value = currentNode.value[1]
+
+                    newTable.insert(key, value)
+
+                    currentNode = currentNode.next
+
+        self.capacity = newTable.capacity
+        self.storage = newTable.storage
+
+        del newTable
 
 if __name__ == "__main__":
     ht = HashTable(2)
