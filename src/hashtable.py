@@ -17,6 +17,8 @@ class HashTable:
     def __init__(self, capacity):
         self.capacity = capacity  # Number of buckets in the hash table
         self.storage = [None] * capacity
+        self.load = 0.0
+        self.resizing = False
 
 
     def _hash(self, key):
@@ -34,7 +36,11 @@ class HashTable:
 
         OPTIONAL STRETCH: Research and implement DJB2
         '''
-        pass
+        spec = 5381
+        for char in key:
+            spec = (( spec << 5 ) + spec) + ord(char)
+
+        return spec & 0xFFFFFFFF
 
 
     def _hash_mod(self, key):
@@ -60,6 +66,10 @@ class HashTable:
 
             self.storage[pos] = linked
             linked.add_to_tail( (key, value) )
+
+            self.load = self.load + 1
+            self.autoResize()
+            
         else:
             currentNode = self.storage[pos].head
             found = False
@@ -76,7 +86,12 @@ class HashTable:
                 self.storage[pos].add_to_tail( (key, value) )
         
 
-
+    def autoResize(self):
+        if self.resizing is False and self.load > 0:
+                if self.capacity / self.load < 0.2:
+                    self.resize(self.capacity // 2)
+                elif self.capacity / self.load > 0.7:
+                    self.resize(self.capacity * 2)
 
     def remove(self, key):
         '''
@@ -94,6 +109,12 @@ class HashTable:
             while currentNode is not None:
                 if currentNode.value[0] == key:
                     self.storage[pos].delete(currentNode)
+
+                    if self.storage[pos].head is None:
+                        self.load = self.load - 1
+
+                    self.autoResize()
+
                     return
                 
                 currentNode = currentNode.next
@@ -122,14 +143,21 @@ class HashTable:
 
         return None
 
-    def resize(self):
+    def resize(self, newCapacity = None):
         '''
         Doubles the capacity of the hash table and
         rehash all key/value pairs.
 
         Fill this in.
         '''
-        newTable = HashTable(self.capacity * 2)
+
+        if newCapacity == None:
+            newCapacity = self.capacity * 2
+
+        newTable = HashTable(newCapacity)
+
+        newTable.resizing = True
+        self.resizing = True
 
         for i in self.storage:
             if i is not None:
@@ -145,6 +173,7 @@ class HashTable:
 
         self.capacity = newTable.capacity
         self.storage = newTable.storage
+        self.resizing = False
 
         del newTable
 
